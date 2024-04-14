@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Paramètres de connexion pour la base source
+source_host="localhost"
+source_port="5432"
+source_db="source_database"
+source_user="source_user"
+source_password="source_password"
+
+# Paramètres de connexion pour la base de destination
+dest_host="localhost"
+dest_port="5432"
+dest_db="destination_database"
+dest_user="destination_user"
+dest_password="destination_password"
+
+# Exporter les données de la base source vers un fichier temporaire
+pg_dump -h $source_host -p $source_port -U $source_user -d $source_db > temp_dump.sql
+
+# Importer les données depuis le fichier temporaire vers la base de destination
+psql -h $dest_host -p $dest_port -U $dest_user -d $dest_db -f temp_dump.sql
+
+# Nettoyer le fichier temporaire
+rm temp_dump.sql
+
+echo "Copie des données terminée."

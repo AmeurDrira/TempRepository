@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Variables
+source_db_host="source_host"
+source_db_port="source_port"
+source_db_name="source_db"
+source_db_user="source_user"
+source_db_password="source_password"
+
+target_db_host="target_host"
+target_db_port="target_port"
+target_db_name="target_db"
+target_db_user="target_user"
+target_db_password="target_password"
+
+# Copie de la base de données source vers une nouvelle base temporaire
+pg_dump -h $source_db_host -p $source_db_port -U $source_db_user -d $source_db_name > temp_db_dump.sql
+psql -h $target_db_host -p $target_db_port -U $target_db_user -d $target_db_name -c "DROP DATABASE IF EXISTS temp_db;"
+psql -h $target_db_host -p $target_db_port -U $target_db_user -c "CREATE DATABASE temp_db;"
+psql -h $target_db_host -p $target_db_port -U $target_db_user -d temp_db < temp_db_dump.sql
+
+# Appliquer le script de modification sur la base temporaire
+psql -h $target_db_host -p $target_db_port -U $target_db_user -d temp_db -f modify_script.sql
+
+# Insérer les nouvelles données dans la base de données cible
+pg_dump -h $target_db_host -p $target_db_port -U $target_db_user -d temp_db --data-only > temp_data_dump.sql
+psql -h $target_db_host -p $target_db_port -U $target_db_user -d $target_db_name < temp_data_dump.sql
+
+# Nettoyer les fichiers temporaires
+rm temp_db_dump.sql
+rm temp_data_dump.sql
